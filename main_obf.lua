@@ -8,9 +8,7 @@ local LP = Players.LocalPlayer
 
 -- chat khi execute
 pcall(function()
-    Rep.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(
-        "Sctript By Poz","All"
-    )
+    Rep.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Sctript By Poz","All")
 end)
 
 -- character
@@ -28,59 +26,57 @@ end)
 local state = {
     follow = false,
     target = nil,
-    distance = 5,
+    distance = 6,
 
     autoSkill = false,
-    autoClick = true,
 
-    -- thứ tự skill (PHÍM SỐ)
     skillOrder = {1,2,3,4},
+    skillDelay = 0.35,
 
-    skillDelay = {0.3,0.3,0.3,0.3},
     clickDelay = 0.12,
     qDelay = 0.4
 }
 
--- ================= KEY PRESS =================
-local numKeys = {
+-- ================= KEY =================
+local numKey = {
     [1]=Enum.KeyCode.One,
     [2]=Enum.KeyCode.Two,
     [3]=Enum.KeyCode.Three,
     [4]=Enum.KeyCode.Four
 }
 
-local function pressKey(k)
+local function press(k)
     keypress(k)
     task.wait(0.05)
     keyrelease(k)
 end
 
--- ================= UI BASE =================
+-- ================= GUI =================
 local gui = Instance.new("ScreenGui",game.CoreGui)
 gui.Name = "PozUI"
 
 local main = Instance.new("Frame",gui)
-main.Size = UDim2.fromScale(0.34,0.48)
-main.Position = UDim2.fromScale(0.33,0.25)
-main.BackgroundColor3 = Color3.fromRGB(25,25,25)
-Instance.new("UICorner",main).CornerRadius = UDim.new(0,14)
+main.Size = UDim2.fromScale(0.36,0.52)
+main.Position = UDim2.fromScale(0.32,0.24)
+main.BackgroundColor3 = Color3.fromRGB(22,22,22)
+Instance.new("UICorner",main).CornerRadius = UDim.new(0,16)
 
--- drag main
+-- drag
 do
-    local drag,ds,dp
+    local d,ds,dp
     main.InputBegan:Connect(function(i)
         if i.UserInputType==Enum.UserInputType.MouseButton1 then
-            drag=true ds=i.Position dp=main.Position
+            d=true ds=i.Position dp=main.Position
         end
     end)
     UIS.InputChanged:Connect(function(i)
-        if drag and i.UserInputType==Enum.UserInputType.MouseMovement then
-            local d=i.Position-ds
-            main.Position=UDim2.new(dp.X.Scale,dp.X.Offset+d.X,dp.Y.Scale,dp.Y.Offset+d.Y)
+        if d and i.UserInputType==Enum.UserInputType.MouseMovement then
+            local delta=i.Position-ds
+            main.Position=UDim2.new(dp.X.Scale,dp.X.Offset+delta.X,dp.Y.Scale,dp.Y.Offset+delta.Y)
         end
     end)
     UIS.InputEnded:Connect(function(i)
-        if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then d=false end
     end)
 end
 
@@ -90,25 +86,25 @@ title.Size = UDim2.fromScale(1,0.12)
 title.BackgroundTransparency = 1
 title.Text = "POZ SCRIPT"
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
-title.TextColor3 = Color3.new(1,1,1)
+title.TextSize = 22
+title.TextColor3 = Color3.fromRGB(255,255,255)
 
--- tab buttons
-local tabFollow = Instance.new("TextButton",main)
-tabFollow.Size = UDim2.fromScale(0.5,0.1)
-tabFollow.Position = UDim2.fromScale(0,0.12)
-tabFollow.Text = "Follow Player"
-
-local tabSkill = tabFollow:Clone()
-tabSkill.Parent = main
-tabSkill.Position = UDim2.fromScale(0.5,0.12)
-tabSkill.Text = "Auto Skill"
-
-for _,b in ipairs({tabFollow,tabSkill}) do
+-- tabs
+local function tabBtn(txt,x)
+    local b = Instance.new("TextButton",main)
+    b.Size = UDim2.fromScale(0.5,0.09)
+    b.Position = UDim2.fromScale(x,0.12)
+    b.Text = txt
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 16
     b.BackgroundColor3 = Color3.fromRGB(40,40,40)
     b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.Gotham
+    Instance.new("UICorner",b)
+    return b
 end
+
+local tabFollow = tabBtn("FOLLOW",0)
+local tabSkill  = tabBtn("AUTO SKILL",0.5)
 
 -- pages
 local pageFollow = Instance.new("Frame",main)
@@ -131,10 +127,10 @@ end)
 
 -- ================= FOLLOW TAB =================
 local list = Instance.new("ScrollingFrame",pageFollow)
-list.Size = UDim2.fromScale(0.9,0.45)
+list.Size = UDim2.fromScale(0.9,0.42)
 list.Position = UDim2.fromScale(0.05,0.05)
+list.CanvasSize = UDim2.new()
 list.ScrollBarImageTransparency = 0.3
-list.CanvasSize = UDim2.new(0,0,0,0)
 Instance.new("UIListLayout",list)
 
 local function refreshPlayers()
@@ -146,6 +142,8 @@ local function refreshPlayers()
             b.Size = UDim2.fromScale(1,0)
             b.AutomaticSize = Enum.AutomaticSize.Y
             b.Text = p.Name
+            b.Font = Enum.Font.Gotham
+            b.TextSize = 16
             b.BackgroundColor3 = Color3.fromRGB(45,45,45)
             b.TextColor3 = Color3.new(1,1,1)
             Instance.new("UICorner",b)
@@ -161,106 +159,95 @@ refreshPlayers()
 Players.PlayerAdded:Connect(refreshPlayers)
 Players.PlayerRemoving:Connect(refreshPlayers)
 
--- distance slider
-local distLabel = Instance.new("TextLabel",pageFollow)
-distLabel.Position = UDim2.fromScale(0.05,0.55)
-distLabel.Size = UDim2.fromScale(0.9,0.08)
-distLabel.Text = "Distance: 5"
-distLabel.BackgroundTransparency = 1
-distLabel.TextColor3 = Color3.new(1,1,1)
+-- distance
+local dist = Instance.new("TextLabel",pageFollow)
+dist.Position = UDim2.fromScale(0.05,0.5)
+dist.Size = UDim2.fromScale(0.9,0.08)
+dist.Text = "Distance : 6"
+dist.Font = Enum.Font.GothamBold
+dist.TextSize = 16
+dist.BackgroundTransparency = 1
+dist.TextColor3 = Color3.new(1,1,1)
 
-local slider = Instance.new("Frame",pageFollow)
-slider.Position = UDim2.fromScale(0.05,0.63)
-slider.Size = UDim2.fromScale(0.9,0.05)
-slider.BackgroundColor3 = Color3.fromRGB(50,50,50)
-Instance.new("UICorner",slider)
+-- follow toggle
+local fbtn = Instance.new("TextButton",pageFollow)
+fbtn.Size = UDim2.fromScale(0.9,0.1)
+fbtn.Position = UDim2.fromScale(0.05,0.78)
+fbtn.Text = "FOLLOW : OFF"
+fbtn.Font = Enum.Font.GothamBold
+fbtn.TextSize = 16
+fbtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+fbtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner",fbtn)
 
-local fill = Instance.new("Frame",slider)
-fill.Size = UDim2.fromScale(0.25,1)
-fill.BackgroundColor3 = Color3.fromRGB(100,100,255)
-Instance.new("UICorner",fill)
-
-local sliding=false
-slider.InputBegan:Connect(function(i)
-    if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=true end
-end)
-UIS.InputEnded:Connect(function(i)
-    if i.UserInputType==Enum.UserInputType.MouseButton1 then sliding=false end
-end)
-UIS.InputChanged:Connect(function(i)
-    if sliding then
-        local x=(i.Position.X-slider.AbsolutePosition.X)/slider.AbsoluteSize.X
-        x=math.clamp(x,0,1)
-        fill.Size=UDim2.fromScale(x,1)
-        state.distance=math.floor(x*20)
-        distLabel.Text="Distance: "..state.distance
-    end
-end)
-
-local followBtn = Instance.new("TextButton",pageFollow)
-followBtn.Size = UDim2.fromScale(0.9,0.1)
-followBtn.Position = UDim2.fromScale(0.05,0.78)
-followBtn.Text = "Follow : OFF"
-followBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-followBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner",followBtn)
-
-followBtn.MouseButton1Click:Connect(function()
+fbtn.MouseButton1Click:Connect(function()
     state.follow = not state.follow
-    followBtn.Text = "Follow : "..(state.follow and "ON" or "OFF")
+    fbtn.Text = "FOLLOW : "..(state.follow and "ON" or "OFF")
 end)
 
 RunService.Heartbeat:Connect(function()
     if state.follow and state.target and state.target.Character then
-        local tHRP = state.target.Character:FindFirstChild("HumanoidRootPart")
-        if tHRP and HRP then
-            HRP.CFrame = tHRP.CFrame * CFrame.new(0,0,-state.distance)
+        local t = state.target.Character:FindFirstChild("HumanoidRootPart")
+        if t and HRP then
+            HRP.CFrame = t.CFrame * CFrame.new(0,0,-state.distance)
         end
     end
 end)
 
--- ================= AUTO SKILL LOOP =================
+-- ================= AUTO SKILL TAB =================
+local info = Instance.new("TextLabel",pageSkill)
+info.Size = UDim2.fromScale(0.9,0.35)
+info.Position = UDim2.fromScale(0.05,0.1)
+info.BackgroundTransparency = 1
+info.TextWrapped = true
+info.TextYAlignment = Enum.TextYAlignment.Top
+info.Font = Enum.Font.GothamBold
+info.TextSize = 16
+info.TextColor3 = Color3.new(1,1,1)
+info.Text =
+"Skill Order:\n1 → 2 → 3 → 4\n\nAfter skills:\n• Auto Click x3\n• Press Q"
+
+local abtn = Instance.new("TextButton",pageSkill)
+abtn.Size = UDim2.fromScale(0.9,0.12)
+abtn.Position = UDim2.fromScale(0.05,0.75)
+abtn.Text = "AUTO SKILL : OFF"
+abtn.Font = Enum.Font.GothamBold
+abtn.TextSize = 16
+abtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+abtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner",abtn)
+
+abtn.MouseButton1Click:Connect(function()
+    state.autoSkill = not state.autoSkill
+    abtn.Text = "AUTO SKILL : "..(state.autoSkill and "ON" or "OFF")
+end)
+
+-- loop
 task.spawn(function()
     while task.wait() do
         if state.autoSkill then
-            for i,n in ipairs(state.skillOrder) do
-                local key = numKeys[n]
-                if key then
-                    pressKey(key)
-                    task.wait(state.skillDelay[i] or 0.3)
-                end
+            for _,n in ipairs(state.skillOrder) do
+                press(numKey[n])
+                task.wait(state.skillDelay)
             end
-
-            -- auto click 3 lần
             for i=1,3 do
                 mouse1press() task.wait() mouse1release()
                 task.wait(state.clickDelay)
             end
-
-            -- nhấn Q
-            pressKey(Enum.KeyCode.Q)
+            press(Enum.KeyCode.Q)
             task.wait(state.qDelay)
         end
     end
 end)
 
--- ================= AUTO SKILL UI =================
-local autoBtn = followBtn:Clone()
-autoBtn.Parent = pageSkill
-autoBtn.Position = UDim2.fromScale(0.05,0.82)
-autoBtn.Text = "Auto Skill : OFF"
-
-autoBtn.MouseButton1Click:Connect(function()
-    state.autoSkill = not state.autoSkill
-    autoBtn.Text = "Auto Skill : "..(state.autoSkill and "ON" or "OFF")
-end)
-
--- ================= MINI MENU =================
+-- mini button
 local mini = Instance.new("TextButton",gui)
-mini.Size = UDim2.fromScale(0.05,0.05)
-mini.Position = UDim2.fromScale(0.01,0.4)
+mini.Size = UDim2.fromScale(0.06,0.06)
+mini.Position = UDim2.fromScale(0.02,0.45)
 mini.Text = "POZ"
-mini.BackgroundColor3 = Color3.fromRGB(40,40,40)
+mini.Font = Enum.Font.GothamBold
+mini.TextSize = 16
+mini.BackgroundColor3 = Color3.fromRGB(50,50,50)
 mini.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner",mini)
 
